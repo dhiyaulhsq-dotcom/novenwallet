@@ -1,0 +1,217 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User profile containing identity metadata and account creation timestamps.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "maxLength": 128, "description": "Unique Firebase Authentication UID." },
+        "email": { "type": "string", "maxLength": 256, "description": "User email address." },
+        "displayName": { "type": "string", "maxLength": 128, "description": "User display name." },
+        "photoURL": { "type": "string", "maxLength": 1024, "description": "User profile avatar URL." },
+        "createdAt": { "type": "string", "maxLength": 64, "description": "Account creation timestamp." },
+        "updatedAt": { "type": "string", "maxLength": 64, "description": "Last update timestamp." }
+      },
+      "required": ["uid", "email"]
+    },
+    "Wallet": {
+      "title": "Wallet",
+      "description": "Financial wallet or bank account belonging to the user.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128, "description": "Unique wallet identifier." },
+        "name": { "type": "string", "maxLength": 128, "description": "Wallet or bank name." },
+        "type": { "type": "string", "enum": ["cash", "bank", "ewallet", "credit_card", "investment", "other"], "description": "Type of wallet account." },
+        "balance": { "type": "number", "description": "Current balance in IDR." },
+        "initialBalance": { "type": "number", "description": "Opening balance in IDR." },
+        "color": { "type": "string", "maxLength": 32, "description": "Hex color code for UI badge." },
+        "icon": { "type": "string", "maxLength": 64, "description": "Icon identifier name." },
+        "accountNumber": { "type": "string", "maxLength": 64, "description": "Optional account or card number." },
+        "isExcludedFromTotal": { "type": "boolean", "description": "Whether to exclude from net worth calculations." },
+        "creditLimit": { "type": "number", "description": "Optional credit limit for credit cards." },
+        "billingCycleDate": { "type": "number", "description": "Optional billing cycle day (1-31)." },
+        "dueDate": { "type": "number", "description": "Optional payment due day (1-31)." }
+      },
+      "required": ["id", "name", "type", "balance", "initialBalance", "color", "icon"]
+    },
+    "Category": {
+      "title": "Category",
+      "description": "Spending or income classification category.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128, "description": "Unique category identifier." },
+        "name": { "type": "string", "maxLength": 128, "description": "Category title." },
+        "type": { "type": "string", "enum": ["income", "expense"], "description": "Transaction category type." },
+        "icon": { "type": "string", "maxLength": 64, "description": "Icon identifier name." },
+        "color": { "type": "string", "maxLength": 32, "description": "Hex color code for UI styling." },
+        "subcategories": { "type": "array", "description": "List of subcategory labels." }
+      },
+      "required": ["id", "name", "type", "icon", "color"]
+    },
+    "Transaction": {
+      "title": "Transaction",
+      "description": "Financial ledger record of expense, income, or transfer.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128, "description": "Unique transaction record identifier." },
+        "type": { "type": "string", "enum": ["income", "expense", "transfer"], "description": "Type of financial transaction." },
+        "amount": { "type": "number", "description": "Monetary value in IDR." },
+        "date": { "type": "string", "maxLength": 32, "description": "Transaction date in ISO format YYYY-MM-DD." },
+        "walletId": { "type": "string", "maxLength": 128, "description": "Source wallet identifier." },
+        "toWalletId": { "type": "string", "maxLength": 128, "description": "Destination wallet identifier for transfers." },
+        "categoryId": { "type": "string", "maxLength": 128, "description": "Category identifier." },
+        "subcategory": { "type": "string", "maxLength": 128, "description": "Specific subcategory label." },
+        "payee": { "type": "string", "maxLength": 256, "description": "Merchant, vendor, or payer name." },
+        "note": { "type": "string", "maxLength": 1024, "description": "Optional user notes." },
+        "tags": { "type": "array", "description": "Custom transaction hashtags." },
+        "receiptImage": { "type": "string", "maxLength": 2048, "description": "Optional receipt image URL." },
+        "isSplit": { "type": "boolean", "description": "Whether transaction has split items." },
+        "splits": { "type": "array", "description": "Array of split sub-items." },
+        "createdAt": { "type": "string", "maxLength": 64, "description": "Timestamp of creation." }
+      },
+      "required": ["id", "type", "amount", "date", "walletId"]
+    },
+    "Budget": {
+      "title": "Budget",
+      "description": "Monthly spending cap allocated to a category.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128, "description": "Unique budget identifier." },
+        "categoryId": { "type": "string", "maxLength": 128, "description": "Target expense category identifier." },
+        "month": { "type": "string", "maxLength": 16, "description": "Month string in format YYYY-MM." },
+        "allocatedAmount": { "type": "number", "description": "Allocated maximum spending in IDR." },
+        "alertThreshold": { "type": "number", "description": "Percentage alert threshold (e.g. 80)." }
+      },
+      "required": ["id", "categoryId", "month", "allocatedAmount"]
+    },
+    "Goal": {
+      "title": "Goal",
+      "description": "Financial savings goal.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128, "description": "Unique goal identifier." },
+        "name": { "type": "string", "maxLength": 128, "description": "Title of the savings goal." },
+        "targetAmount": { "type": "number", "description": "Target amount to save in IDR." },
+        "currentAmount": { "type": "number", "description": "Current saved amount in IDR." },
+        "targetDate": { "type": "string", "maxLength": 32, "description": "Target completion date in YYYY-MM-DD format." },
+        "color": { "type": "string", "maxLength": 32, "description": "Hex color code." },
+        "icon": { "type": "string", "maxLength": 64, "description": "Icon identifier." },
+        "walletId": { "type": "string", "maxLength": 128, "description": "Linked wallet ID." },
+        "isCompleted": { "type": "boolean", "description": "Completion status flag." },
+        "priority": { "type": "string", "enum": ["low", "medium", "high"], "description": "Goal priority level." }
+      },
+      "required": ["id", "name", "targetAmount", "currentAmount", "targetDate", "color", "icon"]
+    },
+    "Debt": {
+      "title": "Debt",
+      "description": "Payable or receivable debt tracking record.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128, "description": "Unique debt record identifier." },
+        "type": { "type": "string", "enum": ["payable", "receivable"], "description": "Debt or loan direction." },
+        "title": { "type": "string", "maxLength": 128, "description": "Title or purpose of debt." },
+        "counterparty": { "type": "string", "maxLength": 128, "description": "Lender or borrower name." },
+        "principalAmount": { "type": "number", "description": "Original debt principal in IDR." },
+        "remainingAmount": { "type": "number", "description": "Remaining outstanding balance in IDR." },
+        "dueDate": { "type": "string", "maxLength": 32, "description": "Due date in YYYY-MM-DD format." },
+        "interestRate": { "type": "number", "description": "Annual interest rate percentage." },
+        "status": { "type": "string", "enum": ["active", "paid", "overdue"], "description": "Debt settlement status." },
+        "payments": { "type": "array", "description": "Installment payment history." }
+      },
+      "required": ["id", "type", "title", "counterparty", "principalAmount", "remainingAmount", "dueDate", "status"]
+    },
+    "Asset": {
+      "title": "Asset",
+      "description": "Investment or property asset entry.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128, "description": "Unique asset identifier." },
+        "name": { "type": "string", "maxLength": 128, "description": "Asset name or ticker." },
+        "type": { "type": "string", "enum": ["gold", "mutual_fund", "stock", "crypto", "property", "deposit", "other"], "description": "Asset class type." },
+        "purchaseValue": { "type": "number", "description": "Total acquisition purchase cost in IDR." },
+        "currentValue": { "type": "number", "description": "Estimated current market value in IDR." },
+        "quantity": { "type": "number", "description": "Holding units or quantity." },
+        "unit": { "type": "string", "maxLength": 32, "description": "Unit denomination (gram, lot, coin)." },
+        "purchaseDate": { "type": "string", "maxLength": 32, "description": "Acquisition date in YYYY-MM-DD format." },
+        "notes": { "type": "string", "maxLength": 1024, "description": "Investment notes." }
+      },
+      "required": ["id", "name", "type", "purchaseValue", "currentValue", "purchaseDate"]
+    },
+    "Bill": {
+      "title": "Bill",
+      "description": "Recurring utility bill or subscription.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128, "description": "Unique bill identifier." },
+        "title": { "type": "string", "maxLength": 128, "description": "Name of recurring bill or service." },
+        "amount": { "type": "number", "description": "Estimated recurring cost in IDR." },
+        "dueDate": { "type": "number", "description": "Billing due day of month (1-31)." },
+        "frequency": { "type": "string", "enum": ["monthly", "quarterly", "yearly"], "description": "Billing cadence." },
+        "categoryId": { "type": "string", "maxLength": 128, "description": "Associated expense category identifier." },
+        "walletId": { "type": "string", "maxLength": 128, "description": "Preferred debit wallet identifier." },
+        "isAutoDebit": { "type": "boolean", "description": "Whether auto-debit is enabled." },
+        "status": { "type": "string", "enum": ["paid", "unpaid", "overdue"], "description": "Current month bill payment status." },
+        "lastPaidDate": { "type": "string", "maxLength": 32, "description": "Date of latest payment in YYYY-MM-DD." }
+      },
+      "required": ["id", "title", "amount", "dueDate", "frequency", "status"]
+    },
+    "UserSettings": {
+      "title": "UserSettings",
+      "description": "Personal preferences and configuration flags for a user account.",
+      "type": "object",
+      "properties": {
+        "currency": { "type": "string", "maxLength": 16, "description": "Currency code (default IDR)." },
+        "isPrivacyMode": { "type": "boolean", "description": "Masking numbers on screen toggle." },
+        "salaryDate": { "type": "number", "description": "Monthly pay day (1-31)." },
+        "theme": { "type": "string", "enum": ["light", "dark", "system"], "description": "UI theme mode." },
+        "isPinEnabled": { "type": "boolean", "description": "Optional extra PIN lock on device." },
+        "pinHash": { "type": "string", "maxLength": 256, "description": "Hashed PIN." },
+        "autoLockMinutes": { "type": "number", "description": "Auto-lock timeout in minutes." },
+        "monthlyBudgetLimit": { "type": "number", "description": "Global monthly budget target." },
+        "savingsTargetPct": { "type": "number", "description": "Target savings percentage." }
+      }
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "User profile document containing account metadata."
+    },
+    "/users/{userId}/wallets/{walletId}": {
+      "schema": "Wallet",
+      "description": "User wallets and bank accounts."
+    },
+    "/users/{userId}/categories/{categoryId}": {
+      "schema": "Category",
+      "description": "User expense and income categories."
+    },
+    "/users/{userId}/transactions/{transactionId}": {
+      "schema": "Transaction",
+      "description": "User financial transactions ledger."
+    },
+    "/users/{userId}/budgets/{budgetId}": {
+      "schema": "Budget",
+      "description": "User monthly category budgets."
+    },
+    "/users/{userId}/goals/{goalId}": {
+      "schema": "Goal",
+      "description": "User savings goals."
+    },
+    "/users/{userId}/debts/{debtId}": {
+      "schema": "Debt",
+      "description": "User payable and receivable debts."
+    },
+    "/users/{userId}/assets/{assetId}": {
+      "schema": "Asset",
+      "description": "User investment assets."
+    },
+    "/users/{userId}/bills/{billId}": {
+      "schema": "Bill",
+      "description": "User recurring bills and subscriptions."
+    },
+    "/users/{userId}/settings/{settingId}": {
+      "schema": "UserSettings",
+      "description": "User preference settings."
+    }
+  }
+}

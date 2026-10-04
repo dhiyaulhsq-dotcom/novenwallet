@@ -1,0 +1,173 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // 1. Global Default-Deny Catch-All
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // 2. Global Security Primitives & Helpers
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && isValidId(userId) && request.auth.uid == userId;
+    }
+
+    // 3. Entity Validation Helpers
+    function isValidUserProfile(data, userId) {
+      return data.uid == userId &&
+        data.email is string && data.email.size() <= 256 &&
+        (!('displayName' in data) || (data.displayName is string && data.displayName.size() <= 128)) &&
+        (!('photoURL' in data) || (data.photoURL is string && data.photoURL.size() <= 1024));
+    }
+
+    function isValidWallet(data) {
+      return data.id is string && data.id.size() <= 128 &&
+        data.name is string && data.name.size() > 0 && data.name.size() <= 128 &&
+        data.type in ['cash', 'bank', 'ewallet', 'credit_card', 'investment', 'other'] &&
+        data.balance is number &&
+        data.initialBalance is number &&
+        data.color is string && data.color.size() <= 32 &&
+        data.icon is string && data.icon.size() <= 64;
+    }
+
+    function isValidCategory(data) {
+      return data.id is string && data.id.size() <= 128 &&
+        data.name is string && data.name.size() > 0 && data.name.size() <= 128 &&
+        data.type in ['income', 'expense'] &&
+        data.icon is string && data.icon.size() <= 64 &&
+        data.color is string && data.color.size() <= 32;
+    }
+
+    function isValidTransaction(data) {
+      return data.id is string && data.id.size() <= 128 &&
+        data.type in ['income', 'expense', 'transfer'] &&
+        data.amount is number &&
+        data.date is string && data.date.size() <= 32 &&
+        data.walletId is string && data.walletId.size() <= 128 &&
+        (!('note' in data) || (data.note is string && data.note.size() <= 1024)) &&
+        (!('payee' in data) || (data.payee is string && data.payee.size() <= 256)) &&
+        (!('tags' in data) || (data.tags is list && data.tags.size() <= 30));
+    }
+
+    function isValidBudget(data) {
+      return data.id is string && data.id.size() <= 128 &&
+        data.categoryId is string && data.categoryId.size() <= 128 &&
+        data.month is string && data.month.size() <= 16 &&
+        data.allocatedAmount is number;
+    }
+
+    function isValidGoal(data) {
+      return data.id is string && data.id.size() <= 128 &&
+        data.name is string && data.name.size() <= 128 &&
+        data.targetAmount is number &&
+        data.currentAmount is number &&
+        data.targetDate is string && data.targetDate.size() <= 32 &&
+        data.color is string && data.color.size() <= 32 &&
+        data.icon is string && data.icon.size() <= 64;
+    }
+
+    function isValidDebt(data) {
+      return data.id is string && data.id.size() <= 128 &&
+        data.type in ['payable', 'receivable'] &&
+        data.title is string && data.title.size() <= 128 &&
+        data.counterparty is string && data.counterparty.size() <= 128 &&
+        data.principalAmount is number &&
+        data.remainingAmount is number &&
+        data.status in ['active', 'paid', 'overdue'];
+    }
+
+    function isValidAsset(data) {
+      return data.id is string && data.id.size() <= 128 &&
+        data.name is string && data.name.size() <= 128 &&
+        data.type in ['gold', 'mutual_fund', 'stock', 'crypto', 'property', 'deposit', 'other'] &&
+        data.purchaseValue is number &&
+        data.currentValue is number;
+    }
+
+    function isValidBill(data) {
+      return data.id is string && data.id.size() <= 128 &&
+        data.title is string && data.title.size() <= 128 &&
+        data.amount is number &&
+        data.dueDate is number &&
+        data.frequency in ['monthly', 'quarterly', 'yearly'] &&
+        data.status in ['paid', 'unpaid', 'overdue'];
+    }
+
+    // 4. Per-Tenant Multi-User Partitioning
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow create, update: if isOwner(userId) && isValidUserProfile(incoming(), userId);
+      allow delete: if false;
+
+      match /wallets/{walletId} {
+        allow get, list: if isOwner(userId);
+        allow create, update: if isOwner(userId) && isValidId(walletId) && isValidWallet(incoming());
+        allow delete: if isOwner(userId) && isValidId(walletId);
+      }
+
+      match /categories/{categoryId} {
+        allow get, list: if isOwner(userId);
+        allow create, update: if isOwner(userId) && isValidId(categoryId) && isValidCategory(incoming());
+        allow delete: if isOwner(userId) && isValidId(categoryId);
+      }
+
+      match /transactions/{transactionId} {
+        allow get, list: if isOwner(userId);
+        allow create, update: if isOwner(userId) && isValidId(transactionId) && isValidTransaction(incoming());
+        allow delete: if isOwner(userId) && isValidId(transactionId);
+      }
+
+      match /budgets/{budgetId} {
+        allow get, list: if isOwner(userId);
+        allow create, update: if isOwner(userId) && isValidId(budgetId) && isValidBudget(incoming());
+        allow delete: if isOwner(userId) && isValidId(budgetId);
+      }
+
+      match /goals/{goalId} {
+        allow get, list: if isOwner(userId);
+        allow create, update: if isOwner(userId) && isValidId(goalId) && isValidGoal(incoming());
+        allow delete: if isOwner(userId) && isValidId(goalId);
+      }
+
+      match /debts/{debtId} {
+        allow get, list: if isOwner(userId);
+        allow create, update: if isOwner(userId) && isValidId(debtId) && isValidDebt(incoming());
+        allow delete: if isOwner(userId) && isValidId(debtId);
+      }
+
+      match /assets/{assetId} {
+        allow get, list: if isOwner(userId);
+        allow create, update: if isOwner(userId) && isValidId(assetId) && isValidAsset(incoming());
+        allow delete: if isOwner(userId) && isValidId(assetId);
+      }
+
+      match /bills/{billId} {
+        allow get, list: if isOwner(userId);
+        allow create, update: if isOwner(userId) && isValidId(billId) && isValidBill(incoming());
+        allow delete: if isOwner(userId) && isValidId(billId);
+      }
+
+      match /settings/{settingId} {
+        allow get, list: if isOwner(userId);
+        allow create, update: if isOwner(userId) && isValidId(settingId);
+        allow delete: if isOwner(userId) && isValidId(settingId);
+      }
+    }
+  }
+}

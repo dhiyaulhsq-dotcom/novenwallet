@@ -1,0 +1,6 @@
+{
+  "name": "Noven Wallet",
+  "description": "Aplikasi keuangan pribadi komprehensif untuk melacak arus kas, aset, anggaran, utang, dan investasi dengan penyimpanan lokal aman.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
